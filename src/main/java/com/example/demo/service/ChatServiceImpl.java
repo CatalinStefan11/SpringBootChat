@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.MessageDto;
+import com.example.demo.misc.MessageQueue;
 import com.example.demo.model.Conversation;
 import com.example.demo.model.Message;
 import com.example.demo.repository.ConversationRepository;
@@ -23,6 +24,7 @@ public class ChatServiceImpl implements ChatService {
     private final MessageRepository messageRepository;
     private final MessageRepositoryPagination messageRepositoryPagination;
     private final ConversationRepository conversationRepository;
+    private final MessageQueue messageQueue;
 
     private List<Message> messagesCached = new ArrayList<>();
 
@@ -34,10 +36,12 @@ public class ChatServiceImpl implements ChatService {
     @Autowired
     public ChatServiceImpl(MessageRepository messageRepository,
                            MessageRepositoryPagination messageRepositoryPagination,
-                           ConversationRepository conversationRepository) {
+                           ConversationRepository conversationRepository,
+                           MessageQueue messageQueue) {
         this.messageRepository = messageRepository;
         this.messageRepositoryPagination = messageRepositoryPagination;
         this.conversationRepository = conversationRepository;
+        this.messageQueue = messageQueue;
     }
 
     @Override
@@ -58,6 +62,11 @@ public class ChatServiceImpl implements ChatService {
             messages = messageRepository.findByUuid(uuid);
         }
         return messages.stream().map(message -> new MessageDto(message.getMessage(), recipientId, message.getSenderId(), "")).collect(Collectors.toList());
+    }
+
+    @Override
+    public Set<String> getPersonsContacted(String recipient) {
+        return messageQueue.getAllPersonsSentMessageTo(recipient);
     }
 
     @Override
@@ -95,6 +104,16 @@ public class ChatServiceImpl implements ChatService {
                 .stream()
                 .map(message -> new MessageDto(message.getMessage(), recipientId, message.getSenderId(), ""))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void saveMessagesUndelivered(MessageDto messageDto) {
+        messageQueue.addMessage(Message.createMessageFrom(messageDto));
+    }
+
+    @Override
+    public void clearMessagesUndelivered(String recipient) {
+        messageQueue.removeMessagesFor(recipient);
     }
 
     @Scheduled(fixedDelay = delayMillisecondsSaveBatch)

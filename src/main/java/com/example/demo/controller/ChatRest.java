@@ -7,12 +7,10 @@ import com.example.demo.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @Slf4j
@@ -30,6 +28,19 @@ public class ChatRest {
         log.info("return message history for users: " + senderId + " with " + recipientId);
         return chatService.getMessageHistoryFor(senderId, recipientId);
     }
+
+    @GetMapping("/{recipient}/contacts")
+    public Set<String> getContacts(@PathVariable("recipient") String recipient) {
+        log.info("return list of users who contacted: " + recipient);
+        return chatService.getPersonsContacted(recipient);
+    }
+
+    @DeleteMapping("/{recipient}/contacts")
+    public void clearContacts(@PathVariable("recipient") String recipient) {
+        log.info("cleared the list of users who contacted: " + recipient);
+        chatService.clearMessagesUndelivered(recipient);
+    }
+
 
     @GetMapping("/messages/{senderId}/{recipientId}/page")
     public List<MessageDto> getConversationHistoryByPage(@PathVariable("senderId") String senderId, @PathVariable("recipientId") String recipientId,
