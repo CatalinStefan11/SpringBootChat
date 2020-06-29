@@ -31,7 +31,7 @@ public class WebsocketHandler extends AbstractWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
-            String msg = String.valueOf(message.getPayload());
+            String msg = String.valueOf(message.getPayload()).replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n");
             MessageDto messageDto = objectMapper.readValue(msg, MessageDto.class);
             log.info(messageDto);
             if (messageDto.getMessage().toLowerCase().equals("connected") && messageDto.getSenderId() != null) {
