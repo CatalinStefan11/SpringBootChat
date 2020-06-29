@@ -44,9 +44,10 @@ public class WebsocketHandler extends AbstractWebSocketHandler {
                 if (sessionMap.containsKey(messageDto.getSenderId())) {
                     log.info("msg forwarded from " + messageDto.getSenderId() + " to " + messageDto.getRecipientId());
                     sessionMap.get(messageDto.getSenderId()).sendMessage(new TextMessage(messageDto.toString()));
+                    chatService.saveMessagesUndelivered(messageDto);
                 } else {
                     log.info("session map does not contain session  for websocket");
-                    log.info("queue the message to be sent when the ");
+                    log.info("queue the message");
                     chatService.saveMessagesUndelivered(messageDto);
                 }
             }
