@@ -41,13 +41,13 @@ public class WebsocketHandler extends AbstractWebSocketHandler {
                 chatService.saveMessage(messageDto);
                 log.info("messaged saved");
                 System.out.println(sessionMap.toString());
-                if (sessionMap.containsKey(messageDto.getSenderId())) {
+                if (sessionMap.containsKey(messageDto.getRecipientId())) {
                     log.info("msg forwarded from " + messageDto.getSenderId() + " to " + messageDto.getRecipientId());
 
-                    if (sessionMap.get(messageDto.getSenderId()).isOpen()){
-                        sessionMap.get(messageDto.getSenderId()).sendMessage(new TextMessage(messageDto.toString()));
+                    if (sessionMap.get(messageDto.getRecipientId()).isOpen()){
+                        sessionMap.get(messageDto.getRecipientId()).sendMessage(new TextMessage(messageDto.toString()));
                     } else {
-                        sessionMap.remove(messageDto.getSenderId());
+                        sessionMap.remove(messageDto.getRecipientId());
                     }
                     chatService.saveMessagesUndelivered(messageDto);
 
