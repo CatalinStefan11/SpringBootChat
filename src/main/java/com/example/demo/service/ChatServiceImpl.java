@@ -61,7 +61,7 @@ public class ChatServiceImpl implements ChatService {
             String uuid = conversation2.get().getUuid();
             messages = messageRepository.findByUuid(uuid);
         }
-        return messages.stream().map(message -> new MessageDto(message.getMessage(), recipientId, message.getSenderId(), "")).collect(Collectors.toList());
+        return messages.stream().map(message -> new MessageDto(message.getMessage(), message.getRecipientId(), message.getSenderId(),  "")).collect(Collectors.toList());
     }
 
     @Override
