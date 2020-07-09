@@ -13,6 +13,9 @@ import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.example.demo.misc.Util.isMessageOfConnection;
+import static com.example.demo.misc.Util.removeEndlines;
+
 @Log4j2
 @Component
 public class WebsocketHandler extends AbstractWebSocketHandler {
@@ -27,24 +30,21 @@ public class WebsocketHandler extends AbstractWebSocketHandler {
         this.chatService = chatService;
     }
 
-    //todo seassion map sa fie tot timpul bun sa fie populat cu conexiuni
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
-            String msg = String.valueOf(message.getPayload()).replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n");
+            String msg = removeEndlines(message.getPayload());
             MessageDto messageDto = objectMapper.readValue(msg, MessageDto.class);
             log.info(messageDto);
-            if (messageDto.getMessage().toLowerCase().equals("connected") && messageDto.getSenderId() != null) {
+            if (isMessageOfConnection(messageDto)) {
                 log.info("added new user to connection pool userId:" + messageDto.getSenderId() + " sessionId " + session.hashCode());
                 sessionMap.put(messageDto.getSenderId(), session);
             } else {
                 chatService.saveMessage(messageDto);
-                log.info("messaged saved");
-                System.out.println(sessionMap.toString());
                 if (sessionMap.containsKey(messageDto.getRecipientId())) {
                     log.info("msg forwarded from " + messageDto.getSenderId() + " to " + messageDto.getRecipientId());
 
-                    if (sessionMap.get(messageDto.getRecipientId()).isOpen()){
+                    if (sessionMap.get(messageDto.getRecipientId()).isOpen()) {
                         sessionMap.get(messageDto.getRecipientId()).sendMessage(new TextMessage(messageDto.toString()));
                     } else {
                         sessionMap.remove(messageDto.getRecipientId());
@@ -52,13 +52,12 @@ public class WebsocketHandler extends AbstractWebSocketHandler {
                     chatService.saveMessagesUndelivered(messageDto);
 
                 } else {
-                    log.info("session map does not contain session  for websocket");
-                    log.info("queue the message");
+                    log.info("we queued the messaege");
                     chatService.saveMessagesUndelivered(messageDto);
                 }
             }
         } catch (Exception e) {
-            log.info("smth wrong with deserialization of Message class");
+            log.error(e.getMessage());
         }
     }
 }
